@@ -1,0 +1,67 @@
+version: '3.9'
+
+services:
+  yocto:
+    build:
+      context: ./Entorno
+      dockerfile: Dockerfile
+      args:
+        YOCTO_PASS: yocto
+    image: damiannogueiras/yocto-env:latest
+    container_name: yocto-minimal
+    
+    # Configuración de terminal interactiva
+    stdin_open: true
+    tty: true
+    
+    # Volúmenes
+    volumes:
+      - ../yocto_projects:/home/yoctouser/yocto_projects
+      - yocto-output:/home/yoctouser/yocto_output
+
+    working_dir: /home/yoctouser/yocto_projects
+    
+    # Mantiene el contenedor corriendo
+    command: /bin/bash
+    
+    # Límites de recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 16G
+        reservations:
+          cpus: '2'
+          memory: 8G
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "test", "-d", "/home/yoctouser/yocto_projects"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Red personalizada
+    networks:
+      - yocto-network
+    
+    # Reinicio automático
+    restart: unless-stopped
+    
+    # Variables de entorno
+    environment:
+      - YOCTO_BUILD_TYPE=minimal
+      - SSTATE_DIR=/home/yoctouser/yocto_output/sstate-cache
+      - DL_DIR=/home/yoctouser/yocto_output/downloads
+      - TMPDIR=/home/yoctouser/yocto_output/tmp
+
+networks:
+  yocto-network:
+    driver: bridge
+
+volumes:
+  yocto-sstate-cache:
+    driver: local
+  yocto-output:
+    driver: local

@@ -1,0 +1,42 @@
+name: Build and Publish to Docker Hub
+
+on:
+  push:
+    tags:
+      - 'img*' # Se activa con etiquetas que empiecen por img (ej: img1.0)
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/yocto-env
+      # Si el evento viene de un tag, usamos el nombre del tag; si no, el SHA del commit
+      IMAGE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || github.sha }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU (for multi-arch emulation)
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Entorno/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            YOCTO_PASS=${{ secrets.YOCTO_PASS }}
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ env.IMAGE_TAG }}

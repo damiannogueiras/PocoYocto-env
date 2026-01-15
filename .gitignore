@@ -1,0 +1,24 @@
+.env
+.env.local
+.env.*.local
+
+# Yocto workspace and temporary/build artifacts
+yocto_projects/
+tmp/
+build/
+downloads/
+sstate-cache/
+tmp-glibc/
+*.log
+
+# Docker
+.docker
+docker-compose.override.yml
+
+# macOS
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+

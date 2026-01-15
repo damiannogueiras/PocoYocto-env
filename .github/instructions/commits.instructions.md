@@ -1,0 +1,1 @@
+- El mensaje del commit es un frase breve y luego una descripción más detallada separada por una línea en blanco.
