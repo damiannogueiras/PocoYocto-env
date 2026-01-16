@@ -3,12 +3,12 @@ version: '3.9'
 services:
   yocto:
     build:
-      context: ./Entorno
+      context: .
       dockerfile: Dockerfile
       args:
-        YOCTO_PASS: yocto
+        YOCTO_PASS: pocoyo
     image: damiannogueiras/yocto-env:latest
-    container_name: yocto-minimal
+    container_name: pocoyocto
     
     # Configuración de terminal interactiva
     stdin_open: true

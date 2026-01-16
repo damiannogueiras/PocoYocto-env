@@ -39,3 +39,6 @@ RUN mkdir -p /home/yoctouser/.yocto-cache && \
 
 USER yoctouser
 WORKDIR /home/yoctouser/yocto_projects
+
+# Clonar el repositorio poky
+RUN git clone git://git.yoctoproject.org/poky -b kirkstone

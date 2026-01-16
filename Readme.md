@@ -49,20 +49,9 @@ La construcción puede tardar varios minutos.
 
 Una vez construida la imagen, inicia un contenedor. Este será tu entorno de trabajo para Yocto.
 
-```bash
-# Monta la carpeta de trabajo 'yocto_projects' que vive en la raíz del repo al contenedor
-# Usa $(pwd) para referenciar la ruta absoluta desde donde ejecutás el comando.
-docker run -it --name yocto_build -v "$(pwd)/yocto_projects:/home/yoctouser/yocto_projects" yocto_env /bin/bash
-```
-*   `docker run -it`: Inicia un contenedor en modo interactivo.
-*   `--name yocto_build`: Le da un nombre al contenedor para que puedas referenciarlo fácilmente.
-*   `-v "$(pwd)/yocto_projects:/home/yoctouser/yocto_projects"`: Monta la carpeta `yocto_projects` del repo dentro del contenedor. **Todo tu trabajo se guardará aquí**.
-*   `yocto_env`: El nombre de la imagen que quieres usar.
-*   `/bin/bash`: Inicia una sesión de terminal dentro del contenedor.
-
 ### Alternativa recomendada: Docker Compose
 
-Si preferís usar Docker Compose (más cómodo para day-to-day), hay un `docker-compose.yml` en la raíz del repo que define un servicio llamado `yocto`.
+Si preferís usar Docker Compose, hay un `docker-compose.yml` en la raíz del repo que define un servicio llamado `yocto`.
 
 Para levantar el entorno en background:
 
@@ -77,7 +66,7 @@ Para abrir una shell dentro del contenedor en ejecución:
 
 ```bash
 # Accedé al shell del contenedor llamado 'yocto-minimal' (nombre definido en docker-compose.yml)
-docker exec -it yocto-minimal /bin/bash
+docker exec -it pocoyocto /bin/bash
 ```
 
 Si preferís usar el nombre del servicio en lugar del container_name (por ejemplo en entornos donde no se setea `container_name`), podés usar:
