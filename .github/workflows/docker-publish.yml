@@ -9,7 +9,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     env:
-      IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/yocto-env
+      IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/pocoyocto-env
       # Si el evento viene de un tag, usamos el nombre del tag; si no, el SHA del commit
       IMAGE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || github.sha }}
     steps:
@@ -32,7 +32,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: Entorno/Dockerfile
+          file: Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           build-args: |
