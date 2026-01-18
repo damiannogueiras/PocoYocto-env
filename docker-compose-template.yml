@@ -1,14 +1,12 @@
-version: '3.9'
-
 services:
-  yocto:
+  pocoyocto:
     build:
       context: .
       dockerfile: Dockerfile
       args:
         YOCTO_PASS: pocoyo
-    image: damiannogueiras/yocto-env:latest
-    container_name: pocoyocto
+    image: damiannogueiras/pocoyocto-env:latest
+    container_name: pocoyocto-[machine]
     
     # Configuración de terminal interactiva
     stdin_open: true
@@ -17,7 +15,8 @@ services:
     # Volúmenes
     volumes:
       - ../yocto_projects:/home/yoctouser/yocto_projects
-      - yocto-output:/home/yoctouser/yocto_output
+      - yocto-output-[machine]:/home/yoctouser/yocto_output
+      - build-rpi4-[machine]:/home/yoctouser/yocto_projects/poky/build
 
     working_dir: /home/yoctouser/yocto_projects
     
@@ -28,10 +27,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '4'
-          memory: 16G
+          cpus: '8'
+          memory: 10G
         reservations:
-          cpus: '2'
+          cpus: '6'
           memory: 8G
     
     # Health check
@@ -61,7 +60,7 @@ networks:
     driver: bridge
 
 volumes:
-  yocto-sstate-cache:
+  build-[machine]:
     driver: local
-  yocto-output:
+  yocto-output-[machine]:
     driver: local
