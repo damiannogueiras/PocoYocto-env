@@ -42,3 +42,16 @@ WORKDIR /home/yoctouser/yocto_projects
 
 # Clonar el repositorio poky
 RUN git clone git://git.yoctoproject.org/poky -b kirkstone
+
+# dependencias para toaster
+RUN sudo apt-get update && sudo apt-get install -y --no-install-recommends \
+    python3-django \
+    python3-pip \
+    python3-psutil \
+    python3-pygments \
+    python3-twisted \
+    python3-twisted-web \
+    python3-zope.interface \
+    && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/* \
+RUN pip3 install -r /home/yoctouser/yocto_projects/poky/bitbake/toaster-requirements.txt
+
