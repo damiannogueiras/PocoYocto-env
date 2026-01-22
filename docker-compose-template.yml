@@ -14,14 +14,13 @@ services:
     
     # Volúmenes
     volumes:
-      - ../yocto_projects:/home/yoctouser/yocto_projects
       - yocto-output-[machine]:/home/yoctouser/yocto_output
-      - build-rpi4-[machine]:/home/yoctouser/yocto_projects/poky/build
+      - build-[machine]:/home/yoctouser/yocto_projects/poky/build
 
     working_dir: /home/yoctouser/yocto_projects
     
-    # Mantiene el contenedor corriendo
-    command: /bin/bash
+    # Mantiene el contenedor corriendo y lanza toaster
+    command: /bin/bash -c "cd poky && source oe-init-build-env ../build && source toaster start webport=0.0.0.0:8000 && exec /bin/bash"
     
     # Límites de recursos
     deploy:
