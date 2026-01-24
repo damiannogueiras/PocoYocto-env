@@ -44,7 +44,7 @@ WORKDIR /home/yoctouser/yocto_projects
 RUN mkdir -p ~/bin
 
 # Clonar el repositorio poky
-RUN git clone git://git.yoctoproject.org/poky -b kirkstone
+RUN git clone git://git.yoctoproject.org/poky -b scarthgap
 RUN curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
 RUN chmod a+x ~/bin/repo
 RUN echo 'export PATH=$HOME/bin:$PATH' >> /home/yoctouser/.bashrc
