@@ -26,19 +26,19 @@ ENV LC_ALL=en_US.UTF-8
 
 # Crear un usuario no-root para trabajar con Yocto
 ARG YOCTO_PASS
-RUN useradd -m -s /bin/bash yoctouser && echo "yoctouser:${YOCTO_PASS}" | chpasswd && adduser yoctouser sudo
-RUN usermod -s /bin/bash yoctouser
+RUN useradd -m -s /bin/bash pocoyoctouser && echo "pocoyoctouser:${YOCTO_PASS}" | chpasswd && adduser pocoyoctouser sudo
+RUN usermod -s /bin/bash pocoyoctouser
 
 # Configurar sudo sin contraseña para yoctouser (más seguro que ahora)
-RUN echo "yoctouser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/yoctouser && \
-    chmod 0440 /etc/sudoers.d/yoctouser
+RUN echo "pocoyoctouser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/pocoyoctouser && \
+    chmod 0440 /etc/sudoers.d/pocoyoctouser
 
 # Pre-crear directorio de caché
-RUN mkdir -p /home/yoctouser/.yocto-cache && \
-    chown -R yoctouser:yoctouser /home/yoctouser
+RUN mkdir -p /home/pocoyoctouser/.pocoyocto-cache && \
+    chown -R pocoyoctouser:pocoyoctouser /home/pocoyoctouser
 
-USER yoctouser
-WORKDIR /home/yoctouser/yocto_projects
+USER pocoyoctouser
+WORKDIR /home/pocoyoctouser
 
 # instalamos herramienta repo utilizada documentacion de NXP
 RUN mkdir -p ~/bin
@@ -47,8 +47,8 @@ RUN mkdir -p ~/bin
 RUN git clone git://git.yoctoproject.org/poky -b scarthgap
 RUN curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
 RUN chmod a+x ~/bin/repo
-RUN echo 'export PATH=$HOME/bin:$PATH' >> /home/yoctouser/.bashrc
+RUN echo 'export PATH=$HOME/bin:$PATH' >> /home/pocoyoctouser/.bashrc
 
 # dependencias para toaster
-RUN pip3 install -r /home/yoctouser/yocto_projects/poky/bitbake/toaster-requirements.txt
+RUN pip3 install -r /home/pocoyoctouser/poky/bitbake/toaster-requirements.txt
 
