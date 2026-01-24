@@ -11,17 +11,25 @@ services:
     # Configuración de terminal interactiva
     stdin_open: true
     tty: true
-    
+
+    ports:
+      - "8000:8000"
+
     # Volúmenes
     volumes:
-      - yocto-output-[machine]:/home/yoctouser/yocto_output
-      - build-[machine]:/home/yoctouser/yocto_projects/poky/build
+      - output-[machine]:/home/pocoyoctouser/output
+      - build-[machine]:/home/pocoyoctouser/build
+      - ./metas:/home/pocoyoctouser/build/metas
+      - ./metas-propias:/home/pocoyoctouser/build/metas-propias
 
-    working_dir: /home/yoctouser/yocto_projects
-    
-    # Mantiene el contenedor corriendo y lanza toaster
-    command: /bin/bash -c "cd poky && source oe-init-build-env ../build && source toaster start webport=0.0.0.0:8000 && exec /bin/bash"
-    
+    working_dir: /home/pocoyoctouser
+
+    # Cambia permisos en vol
+    # crea entorno build
+    # lanza toaster
+    # Mantiene el contenedor corriendo
+    command: /bin/bash -c "sudo chown -R pocoyoctouser:pocoyoctouser /home/pocoyoctouser/build /home/pocoyoctouser/output && cd poky && source oe-init-build-env ../build && source toaster start webport=0.0.0.0:8000 && exec /bin/bash"
+
     # Límites de recursos
     deploy:
       resources:
@@ -31,35 +39,35 @@ services:
         reservations:
           cpus: '6'
           memory: 8G
-    
+
     # Health check
     healthcheck:
-      test: ["CMD", "test", "-d", "/home/yoctouser/yocto_projects"]
+      test: [ "CMD", "test", "-d", "/home/pocoyoctouser" ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
-    
+
     # Red personalizada
     networks:
-      - yocto-network
-    
+      - pocoyocto-network
+
     # Reinicio automático
     restart: unless-stopped
-    
+
     # Variables de entorno
     environment:
       - YOCTO_BUILD_TYPE=minimal
-      - SSTATE_DIR=/home/yoctouser/yocto_output/sstate-cache
-      - DL_DIR=/home/yoctouser/yocto_output/downloads
-      - TMPDIR=/home/yoctouser/yocto_output/tmp
+      - SSTATE_DIR=/home/pocoyoctouser/output/sstate-cache
+      - DL_DIR=/home/pocoyoctouser/output/downloads
+      - TMPDIR=/home/pocoyoctouser/output/tmp
 
 networks:
-  yocto-network:
+  pocoyocto-network:
     driver: bridge
 
 volumes:
   build-[machine]:
     driver: local
-  yocto-output-[machine]:
+  output-[machine]:
     driver: local
