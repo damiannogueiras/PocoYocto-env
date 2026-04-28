@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
       args:
         YOCTO_PASS: pocoyo
+        HOST_UID: "${UID:-1000}"
     image: damiannogueiras/pocoyocto-env:latest
     container_name: pocoyocto-[machine]
     
@@ -14,7 +15,7 @@ services:
 
     ports:
       - "8000:8000"
-
+      - "2222:2222"
     # Volúmenes
     volumes:
       - output-[machine]:/home/pocoyoctouser/output
@@ -28,7 +29,9 @@ services:
     # crea entorno build
     # lanza toaster
     # Mantiene el contenedor corriendo
-    command: /bin/bash -c "sudo chown -R pocoyoctouser:pocoyoctouser /home/pocoyoctouser/build /home/pocoyoctouser/output && cd poky && source oe-init-build-env ../build && source toaster start webport=0.0.0.0:8000 && exec /bin/bash"
+    # chown solo en los volúmenes Docker (output), NO en bind-mounts (metas/)
+    # El UID de pocoyoctouser ya coincide con el del host via build arg HOST_UID
+    command: /bin/bash -c "sudo chown pocoyoctouser:pocoyoctouser /home/pocoyoctouser/build && sudo chown -R pocoyoctouser:pocoyoctouser /home/pocoyoctouser/output && cd /home/pocoyoctouser/poky && source oe-init-build-env ../build && source toaster start webport=0.0.0.0:8000 && exec /bin/bash"
 
     # Límites de recursos
     deploy:
@@ -58,9 +61,12 @@ services:
     # Variables de entorno
     environment:
       - YOCTO_BUILD_TYPE=minimal
+      - TOASTER_DIR=/home/pocoyoctouser/build/toaster_logs
+      - BB_ENV_PASSTHROUGH_ADDITIONS=TOASTER_DIR
       - SSTATE_DIR=/home/pocoyoctouser/output/sstate-cache
       - DL_DIR=/home/pocoyoctouser/output/downloads
-      - TMPDIR=/home/pocoyoctouser/output/tmp
+      - TMPDIR=/home/pocoyoctouser/build/tmp
+      - "QB_SLIRP_OPT=-netdev user,id=net0,hostfwd=tcp::2222-:22,tftp=/home/pocoyoctouser/build/tmp/deploy/images/qemuarm64"
 
 networks:
   pocoyocto-network:

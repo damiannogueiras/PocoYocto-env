@@ -14,8 +14,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get update && apt-get install -y --no-install-recommends 
 RUN apt install -y gawk wget git diffstat texinfo gcc build-essential chrpath socat cpio python3 python3-pip unzip xz-utils debianutils iputils-ping xterm sudo
 RUN apt install -y python3-pexpect libsdl1.2-dev locales node-fs.realpath tzdata file lz4 zstd liblz4-tool
-RUN apt install -y emacs-nox nano net-tools curl
+RUN apt install -y emacs-nox nano net-tools curl openssh-server
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Configurar SSH
+RUN mkdir /var/run/sshd
+RUN echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config
+RUN echo 'PermitRootLogin no' >> /etc/ssh/sshd_config
+
+# Exponer el puerto SSH
+EXPOSE 22
 
 # Configurar locales tienen que estar en ingles para evitar problemas con algunas herramientas de Yocto
 RUN locale-gen en_US.UTF-8 && \
@@ -25,8 +33,11 @@ ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
 # Crear un usuario no-root para trabajar con Yocto
+# HOST_UID debe coincidir con el UID del usuario del host (macOS) para evitar conflictos
+# de permisos en los bind-mounts. En macOS el primer usuario suele tener UID=501.
 ARG YOCTO_PASS
-RUN useradd -m -s /bin/bash pocoyoctouser && echo "pocoyoctouser:${YOCTO_PASS}" | chpasswd && adduser pocoyoctouser sudo
+ARG HOST_UID=1000
+RUN useradd -m -s /bin/bash -u ${HOST_UID} pocoyoctouser && echo "pocoyoctouser:${YOCTO_PASS}" | chpasswd && adduser pocoyoctouser sudo
 RUN usermod -s /bin/bash pocoyoctouser
 
 # Configurar sudo sin contraseña para yoctouser (más seguro que ahora)
@@ -51,4 +62,7 @@ RUN echo 'export PATH=$HOME/bin:$PATH' >> /home/pocoyoctouser/.bashrc
 
 # dependencias para toaster
 RUN pip3 install -r /home/pocoyoctouser/poky/bitbake/toaster-requirements.txt
+
+# Iniciar el servicio SSH
+CMD ["/usr/sbin/sshd", "-D"]
 
