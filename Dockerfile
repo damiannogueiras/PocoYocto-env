@@ -64,5 +64,4 @@ RUN echo 'export PATH=$HOME/bin:$PATH' >> /home/pocoyoctouser/.bashrc
 RUN pip3 install -r /home/pocoyoctouser/poky/bitbake/toaster-requirements.txt
 
 # Iniciar el servicio SSH
-CMD ["/usr/sbin/sshd", "-D"]
-
+CMD ["/etc/init.d/ssh", "start"]

@@ -15,7 +15,7 @@ services:
 
     ports:
       - "8000:8000"
-      - "2222:2222"
+      - "2222:22"
     # Volúmenes
     volumes:
       - output-[machine]:/home/pocoyoctouser/output
