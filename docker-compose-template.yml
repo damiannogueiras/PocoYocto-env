@@ -31,7 +31,8 @@ services:
     # Mantiene el contenedor corriendo
     # chown solo en los volúmenes Docker (output), NO en bind-mounts (metas/)
     # El UID de pocoyoctouser ya coincide con el del host via build arg HOST_UID
-    command: /bin/bash -c "sudo chown pocoyoctouser:pocoyoctouser /home/pocoyoctouser/build && sudo chown -R pocoyoctouser:pocoyoctouser /home/pocoyoctouser/output && cd /home/pocoyoctouser/poky && source oe-init-build-env ../build && source toaster start webport=0.0.0.0:8000 && exec /bin/bash"
+    # sshd se arranca explícitamente porque el command pisa el CMD del Dockerfile
+    command: /bin/bash -c "sudo /usr/sbin/sshd && sudo chown pocoyoctouser:pocoyoctouser /home/pocoyoctouser/build && sudo chown -R pocoyoctouser:pocoyoctouser /home/pocoyoctouser/output && cd /home/pocoyoctouser/poky && source oe-init-build-env ../build && source toaster start webport=0.0.0.0:8000 && exec /bin/bash"
 
     # Límites de recursos
     deploy:
