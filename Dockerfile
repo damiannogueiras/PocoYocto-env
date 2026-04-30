@@ -1,67 +1,61 @@
 FROM ubuntu:22.04
 
-# Establecer la zona horaria para evitar advertencias durante la instalación de paquetes
+# 1. Configuración de zona horaria y entorno no interactivo
 ENV TZ=Europe/Madrid
+ARG DEBIAN_FRONTEND=noninteractive
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Evitar prompts interactivos durante la instalación
-ARG DEBIAN_FRONTEND=noninteractive
-
+# 2. Instalación de dependencias (Combinadas para optimizar espacio)
+# Se añaden dependencias específicas para el BSP de NXP y Yocto Scarthgap
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     software-properties-common \
     && add-apt-repository -y universe \
-    && apt-get update && apt-get install -y --no-install-recommends 
-RUN apt install -y gawk wget git diffstat texinfo gcc build-essential chrpath socat cpio python3 python3-pip unzip xz-utils debianutils iputils-ping xterm sudo
-RUN apt install -y python3-pexpect libsdl1.2-dev locales node-fs.realpath tzdata file lz4 zstd liblz4-tool
-RUN apt install -y emacs-nox nano net-tools curl openssh-server
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+    && apt-get update && apt-get install -y --no-install-recommends \
+    gawk wget git diffstat texinfo gcc build-essential chrpath socat cpio \
+    unzip xz-utils debianutils iputils-ping xterm sudo \
+    libsdl1.2-dev locales node-fs.realpath tzdata file lz4 zstd liblz4-tool \
+    emacs-nox nano net-tools curl openssh-server \
+    libacl1 python3 python3-pexpect python3-pip python3-git python3-jinja2 \
+    python3-subunit efitools python3-distutils libssl-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Configurar SSH
-RUN mkdir /var/run/sshd
-RUN echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config
-RUN echo 'PermitRootLogin no' >> /etc/ssh/sshd_config
+# 3. Configuración de SSH (Útil para depuración remota)
+RUN mkdir /var/run/sshd && \
+    echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config && \
+    echo 'PermitRootLogin no' >> /etc/ssh/sshd_config
 
-# Exponer el puerto SSH
-EXPOSE 22
-
-# Configurar locales tienen que estar en ingles para evitar problemas con algunas herramientas de Yocto
-RUN locale-gen en_US.UTF-8 && \
-    update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+# 4. Configuración de Locales (Mandatorio para Yocto)
+RUN locale-gen en_US.UTF-8
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
-# Crear un usuario no-root para trabajar con Yocto
-# HOST_UID debe coincidir con el UID del usuario del host (macOS) para evitar conflictos
-# de permisos en los bind-mounts. En macOS el primer usuario suele tener UID=501.
-ARG YOCTO_PASS
+# 5. Configuración de Usuario (Ajustado para evitar problemas de permisos en Host)
+ARG YOCTO_PASS=yocto
 ARG HOST_UID=1000
-RUN useradd -m -s /bin/bash -u ${HOST_UID} pocoyoctouser && echo "pocoyoctouser:${YOCTO_PASS}" | chpasswd && adduser pocoyoctouser sudo
-RUN usermod -s /bin/bash pocoyoctouser
-
-# Configurar sudo sin contraseña para yoctouser (más seguro que ahora)
-RUN echo "pocoyoctouser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/pocoyoctouser && \
+RUN useradd -m -s /bin/bash -u ${HOST_UID} pocoyoctouser && \
+    echo "pocoyoctouser:${YOCTO_PASS}" | chpasswd && \
+    adduser pocoyoctouser sudo && \
+    echo "pocoyoctouser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/pocoyoctouser && \
     chmod 0440 /etc/sudoers.d/pocoyoctouser
 
-# Pre-crear directorio de caché
-RUN mkdir -p /home/pocoyoctouser/.pocoyocto-cache && \
-    chown -R pocoyoctouser:pocoyoctouser /home/pocoyoctouser
-
+# 6. Preparación del entorno de trabajo
 USER pocoyoctouser
 WORKDIR /home/pocoyoctouser
+RUN mkdir -p /home/pocoyoctouser/bin /home/pocoyoctouser/.pocoyocto-cache
 
-# instalamos herramienta repo utilizada documentacion de NXP
-RUN mkdir -p ~/bin
+# 7. Instalación de 'repo' y configuración de PATH
+RUN curl https://storage.googleapis.com/git-repo-downloads/repo > /home/pocoyoctouser/bin/repo && \
+    chmod a+x /home/pocoyoctouser/bin/repo
+ENV PATH="/home/pocoyoctouser/bin:${PATH}"
 
-# Clonar el repositorio poky
-RUN git clone git://git.yoctoproject.org/poky -b scarthgap
-RUN curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
-RUN chmod a+x ~/bin/repo
-RUN echo 'export PATH=$HOME/bin:$PATH' >> /home/pocoyoctouser/.bashrc
+# 8. Descarga de Poky (Scarthgap) y Requerimientos de Toaster
+RUN git clone git://git.yoctoproject.org/poky -b scarthgap --depth 1
+RUN pip3 install --no-cache-dir -r /home/pocoyoctouser/poky/bitbake/toaster-requirements.txt
 
-# dependencias para toaster
-RUN pip3 install -r /home/pocoyoctouser/poky/bitbake/toaster-requirements.txt
+EXPOSE 22
 
-# Iniciar el servicio SSH
-CMD ["/etc/init.d/ssh", "start"]
+# Nota: El i.MX95 requiere el uso de 'repo' con el manifiesto oficial de NXP 
+# más adelante, pero tener Poky aquí ayuda con las dependencias iniciales.
+CMD ["sudo", "/usr/sbin/sshd", "-D"]
